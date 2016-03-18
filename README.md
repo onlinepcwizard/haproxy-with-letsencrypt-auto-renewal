@@ -1,9 +1,21 @@
 HAProxy with Letsencrypt Auto Renewal
 =====================================
 
-This container contains an HAProxy server and one Letencrypt renewal service.
+This container contains an HAProxy server with an auto Letsencrypt renewal service.
 
-Please create an haproxy configuration file in `/etc/haproxy/haproxy.cfg`. And add at least the following entries:
+# Prerequisites
+
+* Docker Compose
+
+# Installation
+
+```
+docker pull tinganho/haproxy-with-letsencrypt-auto-renewal
+```
+
+# Configurations
+
+Please create an HAProxy configuration file in `/etc/haproxy/haproxy.cfg`. And add at least the following entries:
 ```text
 global
 	tune.ssl.default-dh-param 2048
@@ -26,11 +38,11 @@ Create a letsencrypt configuration file in `/usr/local/etc/letsencrypt.ini`:
 rsa-key-size = 4096
 
 # Uncomment and update to register with the specified e-mail address
-email = tingan87@gmail.com
+email = youremail@domain.com
 
 # Uncomment and update to generate certificates for the specified
 # domains.
-domains = content.rosegarden.se
+domains = your.domain.com
 
 # Uncomment to use a text interface instead of ncurses
 # text = True
@@ -43,7 +55,7 @@ In your `docker-compose.yml` file write add the following service:
 
 ```yml
 haproxy:
-  image: dg.flanity.com/haproxy
+  image: tinganho/haproxy-with-letsencrypt-auto-renewal
   ports:
     - 80:80
     - 443:443
