@@ -31,6 +31,8 @@ if [ "$days_exp" -gt "$exp_limit" ]; then
     echo "The certificate is up to date, no need for renewal ($days_exp days left)."
     exit 0;
 else
+    mkdir -p /usr/local/etc/haproxy/certs
+
     if [ -n "$INITIAL_RENEWAL" ]; then
         echo "Creating certificate..."
         $le_path/letsencrypt-auto certonly --agree-tos --renew-by-default --config $config_file
