@@ -18,14 +18,15 @@ docker pull tinganho/haproxy-with-letsencrypt-auto-renewal
 Please create an HAProxy configuration file in `/etc/haproxy/haproxy.cfg`. And add at least the following entries:
 ```text
 global
-	tune.ssl.default-dh-param 2048
+    tune.ssl.default-dh-param 2048
 
 frontend https
-	acl letsencrypt-acl path_beg /.well-known/acme-challenge/
-	use_backend letsencrypt-backend if letsencrypt-acl
+    bind *:443 ssl crt /usr/local/etc/haproxy/certs/your.domain.com.pem
+    acl letsencrypt-acl path_beg /.well-known/acme-challenge/
+    use_backend letsencrypt-backend if letsencrypt-acl
 
 backend letsencrypt-backend
-	server letsencrypt 127.0.0.1:54321
+    server letsencrypt 127.0.0.1:54321
 ```
 Create a letsencrypt configuration file in `/usr/local/etc/letsencrypt.ini`:
 
@@ -62,5 +63,5 @@ haproxy:
   volumes:
     - /etc/haproxy:/usr/local/etc/haproxy
     - /var/log/haproxy:/var/log/haproxy
-	- /usr/local/etc/letsencrypt.ini:/usr/local/etc/letsencrypt.ini:ro
+    - /usr/local/etc/letsencrypt.ini:/usr/local/etc/letsencrypt.ini:ro
 ```
