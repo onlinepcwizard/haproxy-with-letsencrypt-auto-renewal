@@ -1,0 +1,1 @@
+30 2 * * 1 /usr/local/sbin/renew-certificate >> /var/log/renew-certificate.log
