@@ -60,7 +60,7 @@ haproxy:
     - 80:80
     - 443:443
   volumes:
-    - /etc/haproxy:/etc/haproxy
+    - /etc/haproxy:/usr/local/etc/haproxy
     - /var/log/haproxy:/var/log/haproxy
 	- /usr/local/etc/letsencrypt.ini:/usr/local/etc/letsencrypt.ini:ro
 ```
