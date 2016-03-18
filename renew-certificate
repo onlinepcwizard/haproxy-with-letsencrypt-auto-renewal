@@ -40,7 +40,7 @@ else
         echo "Creating $combined_file with latest certs..."
         sudo bash -c "cat /etc/letsencrypt/live/$domain/fullchain.pem /etc/letsencrypt/live/$domain/privkey.pem > $combined_file"
 
-        exit 1;
+        exit 0;
     else
         echo "The certificate for $domain is about to expire soon. Starting Let's Encrypt (HAProxy:$http_01_port) renewal script..."
         $le_path/letsencrypt-auto certonly --agree-tos --renew-by-default --config $config_file --http-01-port $http_01_port
