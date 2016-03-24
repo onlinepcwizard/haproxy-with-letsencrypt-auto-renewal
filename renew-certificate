@@ -38,7 +38,7 @@ else
         $le_path/letsencrypt-auto certonly --agree-tos --renew-by-default --config $config_file
 
         echo "Creating $combined_file with latest certs..."
-        sudo bash -c "cat /etc/letsencrypt/live/$domain/fullchain.pem /etc/letsencrypt/live/$domain/privkey.pem > $combined_file"
+        sudo bash -c "cat /etc/letsencrypt/live/$domain/privkey.pem /etc/letsencrypt/live/$domain/fullchain.pem > $combined_file"
 
         exit 0;
     else
@@ -46,7 +46,7 @@ else
         $le_path/letsencrypt-auto certonly --agree-tos --renew-by-default --config $config_file --http-01-port $http_01_port
 
         echo "Creating $combined_file with latest certs..."
-        sudo bash -c "cat /etc/letsencrypt/live/$domain/fullchain.pem /etc/letsencrypt/live/$domain/privkey.pem > $combined_file"
+        sudo bash -c "cat /etc/letsencrypt/live/$domain/privkey.pem /etc/letsencrypt/live/$domain/fullchain.pem > $combined_file"
     fi
     echo "Reloading $web_service"
     /usr/sbin/service $web_service reload
