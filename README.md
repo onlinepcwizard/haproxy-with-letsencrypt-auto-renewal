@@ -21,35 +21,12 @@ global
     tune.ssl.default-dh-param 2048
 
 frontend https
-    bind *:443 ssl crt /usr/local/etc/haproxy/certs/your.domain.com.pem
+    bind *:443 ssl crt /usr/local/etc/haproxy/certs/domain.com.pem
     acl letsencrypt-acl path_beg /.well-known/acme-challenge/
     use_backend letsencrypt-backend if letsencrypt-acl
 
 backend letsencrypt-backend
     server letsencrypt 127.0.0.1:54321
-```
-Create a letsencrypt configuration file in `/usr/local/etc/letsencrypt.ini`:
-
-```md
-# This is an example of the kind of things you can do in a configuration file.
-# All flags used by the client can be configured here. Run Let's Encrypt with
-# "--help" to learn more about the available options.
-
-# Use a 4096 bit RSA key instead of 2048
-rsa-key-size = 4096
-
-# Uncomment and update to register with the specified e-mail address
-email = youremail@domain.com
-
-# Uncomment and update to generate certificates for the specified
-# domains.
-domains = your.domain.com
-
-# Uncomment to use a text interface instead of ncurses
-# text = True
-
-# Uncomment to use the standalone authenticator
-standalone-supported-challenges = http-01
 ```
 
 In your `docker-compose.yml` file write add the following service:
@@ -60,8 +37,10 @@ haproxy:
   ports:
     - 80:80
     - 443:443
+  environment:
+    # comma separated list of domains. The root domain must be the first entry.
+    - DOMAINS="domain.com, sub.domain.com"
   volumes:
     - /etc/haproxy:/usr/local/etc/haproxy
     - /var/log/haproxy:/var/log/haproxy
-    - /usr/local/etc/letsencrypt.ini:/usr/local/etc/letsencrypt.ini:ro
 ```

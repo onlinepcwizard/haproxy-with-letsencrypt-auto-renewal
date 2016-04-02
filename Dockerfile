@@ -20,11 +20,7 @@ RUN sudo chmod +x /usr/local/sbin/renew-certificate
 ADD crontab /etc/cron.d/renew-certificate-cron
 RUN chmod 0644 /etc/cron.d/renew-certificate-cron
 
-# Services
-RUN sudo service cron start
-RUN sudo service haproxy stop
-
 EXPOSE 443
 EXPOSE 80
 
-CMD ["sh", "-c", "INITIAL_RENEWAL=true /usr/local/sbin/renew-certificate && haproxy -f /usr/local/etc/haproxy/haproxy.cfg"]
+CMD ["sh", "-c", "INITIAL_RENEWAL=true /usr/local/sbin/renew-certificate && haproxy -f /usr/local/etc/haproxy/haproxy.cfg -p /var/run/haproxy.pid"]
