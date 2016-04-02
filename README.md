@@ -15,7 +15,7 @@ docker pull tinganho/haproxy-with-letsencrypt-auto-renewal
 
 # Configurations
 
-Please create an HAProxy configuration file in `/etc/haproxy/haproxy.cfg`. And add at least the following entries:
+Create a HAProxy configuration file in `/etc/haproxy/haproxy.cfg`. And add at least the following entries:
 ```text
 global
     tune.ssl.default-dh-param 2048
@@ -29,7 +29,7 @@ backend letsencrypt-backend
     server letsencrypt 127.0.0.1:54321
 ```
 
-In your `docker-compose.yml` file write add the following service:
+In your `docker-compose.yml` file add the following service:
 
 ```yml
 haproxy:
