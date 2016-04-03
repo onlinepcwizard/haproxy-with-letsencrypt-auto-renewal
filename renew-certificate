@@ -20,9 +20,8 @@ MAX_DAYS_LEFT_TO_EXPIRATION=30;
 OPTION_LIST=""
 IFS=',' read -ra DOMAIN_LIST <<< "$DOMAINS"
 for i in "${DOMAIN_LIST[@]}"; do
-    OPTION_LIST="-d $i $OPTION_LIST"
+    OPTION_LIST="$OPTION_LIST -d $i"
 done
-OPTION_LIST="${OPTION_LIST::-1}"
 ROOT_DOMAIN=${DOMAIN_LIST[0]}
 
 PRIVATE_KEY_FILE="/etc/letsencrypt/live/$ROOT_DOMAIN/privkey.pem"
