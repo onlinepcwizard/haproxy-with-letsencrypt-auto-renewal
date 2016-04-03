@@ -34,39 +34,52 @@ if [ ! -f $COPY_CERTIFICATE_FILE ]; then
     echo "[ERROR] certificate file not found for domain $ROOT_DOMAIN."
 fi
 
-EXPIRATION_TIME=$(date -d "`openssl x509 -in $COPY_CERTIFICATE_FILE -text -noout | grep "Not After" | cut -c 25-`" +%s)
-NOW=$(date -d "now" +%s)
-DAYS_LEFT_TO_EXPRIATION=$(echo \( $EXPIRATION_TIME - $NOW \) / 86400 | bc)
+create_certificate_files() {
+    sudo bash -c "cat $PRIVATE_KEY_FILE $CERTIFICATE_FILE > $FULLCHAIN_FILE"
+    sudo bash -c "cp $PRIVATE_KEY_FILE $COPY_PRIVATE_KEY_FILE"
+    sudo bash -c "cp $CERTIFICATE_FILE $COPY_CERTIFICATE_FILE"
+}
+
+print_creating_certificates() {
+    echo "Creating $FULLCHAIN_FILE and copy certificates to mounted volume..."
+}
+
+certificate_needs_update() {
+    local expiration_time=$(date -d "`openssl x509 -in $COPY_CERTIFICATE_FILE -text -noout | grep "Not After" | cut -c 25-`" +%s)
+    local now=$(date -d "now" +%s)
+    local days_left_to_expiration=$(echo \( $expiration_time - $now \) / 86400 | bc)
+    if [ "$days_left_to_expiration" -gt "$MAX_DAYS_LEFT_TO_EXPIRATION" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+print_renewal_finish_statement() {
+    echo "Renewal process finished for domain $ROOT_DOMAIN."
+}
 
 echo "Checking expiration date for $ROOT_DOMAIN..."
 
-if [ "$DAYS_LEFT_TO_EXPRIATION" -gt "$MAX_DAYS_LEFT_TO_EXPIRATION" ]; then
-    echo "The certificate is up to date, no need for renewal ($DAYS_LEFT_TO_EXPRIATION days left)."
-    exit 0
-else
+if certificate_needs_update; then
     mkdir -p /usr/local/etc/haproxy/certs/$ROOT_DOMAIN
 
     if [ -n "$INITIAL_RENEWAL" ]; then
         echo "Creating certificate..."
         $LETSENCRYPT_DIR/letsencrypt-auto certonly --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST
 
-        echo "Creating $FULLCHAIN_FILE and copy certificates to volume..."
-        sudo bash -c "cat $PRIVATE_KEY_FILE $CERTIFICATE_FILE > $FULLCHAIN_FILE"
-        sudo bash -c "cp $PRIVATE_KEY_FILE $COPY_PRIVATE_KEY_FILE"
-        sudo bash -c "cp $CERTIFICATE_FILE $COPY_CERTIFICATE_FILE"
-        echo "Renewal process finished for domain $ROOT_DOMAIN."
-        exit 0
+        print_creating_certificates
+        create_certificate_files
+        print_renewal_finish_statement
     else
         echo "The certificate for $ROOT_DOMAIN is about to expire soon. Starting Let's Encrypt renewal script..."
         $LETSENCRYPT_DIR/letsencrypt-auto certonly --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 --http-01-port $LETSENCRYPT_PORT $OPTION_LIST
 
-        echo "Creating $FULLCHAIN_FILE and copy certificates to volume..."
-        sudo bash -c "cat $PRIVATE_KEY_FILE $CERTIFICATE_FILE > $FULLCHAIN_FILE"
-        sudo bash -c "cp $PRIVATE_KEY_FILE $COPY_PRIVATE_KEY_FILE"
-        sudo bash -c "cp $CERTIFICATE_FILE $COPY_CERTIFICATE_FILE"
+        print_creating_certificates
+        create_certificate_files
+        print_renewal_finish_statement
+        $HAPROXY_CMD -sf $(cat $HAPROXY_PID_FILE)
     fi
-    $HAPROXY_CMD -sf $(cat $HAPROXY_PID_FILE)
-    echo "Renewal process finished for domain $ROOT_DOMAIN."
-
-    exit 0
+else
+    echo "The certificate is up to date, no need for renewal ($days_left_to_expiration days left)."
 fi

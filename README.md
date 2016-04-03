@@ -38,7 +38,7 @@ haproxy:
     - 80:80
     - 443:443
   environment:
-    # comma separated list of domains. The root domain must be the first entry.
+    # Comma separated list of domains. The root domain must be the first entry.
     DOMAINS: domain.com, sub.domain.com
     EMAIL: user@domain.com
   volumes:
