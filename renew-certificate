@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ ! -n "$DOMAINS" ]; then
+if [ -z "$DOMAINS" ]; then
     echo "You have not set a DOMAINS environmental variable."
     exit 1
 fi
