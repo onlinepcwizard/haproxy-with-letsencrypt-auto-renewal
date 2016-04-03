@@ -41,7 +41,7 @@ DAYS_LEFT_TO_EXPRIATION=$(echo \( $EXPIRATION_TIME - $NOW \) / 86400 | bc)
 echo "Checking expiration date for $ROOT_DOMAIN..."
 
 if [ "$DAYS_LEFT_TO_EXPRIATION" -gt "$MAX_DAYS_LEFT_TO_EXPIRATION" ]; then
-    echo "The certificate is up to date, no need for renewal ($DAYS_TO_EXPIRATION days left)."
+    echo "The certificate is up to date, no need for renewal ($DAYS_LEFT_TO_EXPRIATION days left)."
     exit 0
 else
     mkdir -p /usr/local/etc/haproxy/certs/$ROOT_DOMAIN
