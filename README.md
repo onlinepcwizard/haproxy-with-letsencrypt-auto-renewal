@@ -39,7 +39,8 @@ haproxy:
     - 443:443
   environment:
     # comma separated list of domains. The root domain must be the first entry.
-    - DOMAINS="domain.com, sub.domain.com"
+    DOMAINS: domain.com, sub.domain.com
+    EMAIL: user@domain.com
   volumes:
     - /etc/haproxy:/usr/local/etc/haproxy
     - /var/log/haproxy:/var/log/haproxy
