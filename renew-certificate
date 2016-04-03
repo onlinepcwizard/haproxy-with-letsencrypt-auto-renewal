@@ -1,6 +1,5 @@
 #!/bin/bash
 
-echo $DOMAINS
 if [ -z "$DOMAINS" ]; then
     echo "You have not set a DOMAINS environmental variable."
     exit 1
@@ -11,7 +10,7 @@ HAPROXY_CONFIG_FILE="/usr/local/etc/haproxy/haproxy.cfg"
 HAPROXY_CMD="haproxy -f $HAPROXY_CONFIG_FILE -p $HAPROXY_PID_FILE"
 LETSENCRYPT_PORT="54321"
 LETSENCRYPT_DIR="/opt/letsencrypt";
-MAX_DAYS_TO_LEFT=30;
+MAX_DAYS_LEFT_TO_EXPIRATION=30;
 
 OPTION_LIST=""
 IFS=',' read -ra DOMAIN_LIST <<< "$DOMAINS"
@@ -19,7 +18,7 @@ for i in "${DOMAIN_LIST[@]}"; do
     OPTION_LIST="-d $i "
 done
 OPTION_LIST="${OPTION_LIST::-1}"
-ROOT_DOMAIN = ${DOMAIN_LIST[0]}
+ROOT_DOMAIN=${DOMAIN_LIST[0]}
 
 PRIVATE_KEY_FILE="/etc/letsencrypt/live/$ROOT_DOMAIN/privkey.pem"
 CERTIFICATE_FILE="/etc/letsencrypt/live/$ROOT_DOMAIN/fullchain.pem"
@@ -27,36 +26,39 @@ COPY_PRIVATE_KEY_FILE="/usr/local/etc/haproxy/certs/$ROOT_DOMAIN/privkey.pem"
 COPY_CERTIFICATE_FILE="/usr/local/etc/haproxy/certs/$ROOT_DOMAIN/fullchain.pem"
 FULLCHAIN_FILE="/usr/local/etc/haproxy/certs/$ROOT_DOMAIN/$ROOT_DOMAIN.pem"
 
-if [ ! -f $CERTIFICATE_FILE ]; then
+if [ ! -f $COPY_CERTIFICATE_FILE ]; then
     echo "[ERROR] certificate file not found for domain $ROOT_DOMAIN."
 fi
 
-EXPIRATION_TIME=$(date -d "`openssl x509 -in $CERTIFICATE_FILE -text -noout | grep "Not After" | cut -c 25-`" +%s)
+EXPIRATION_TIME=$(date -d "`openssl x509 -in $COPY_CERTIFICATE_FILE -text -noout | grep "Not After" | cut -c 25-`" +%s)
 NOW=$(date -d "now" +%s)
-$DAYS_TO_EXPIRATION=$(echo \( $EXPIRATION_TIME - $NOW \) / 86400 | bc)
+DAYS_LEFT_TO_EXPRIATION=$(echo \( $EXPIRATION_TIME - $NOW \) / 86400 | bc)
 
 echo "Checking expiration date for $ROOT_DOMAIN..."
 
-if [ "$DAYS_TO_EXPIRATION" -gt "$MAX_DAYS_TO_EXPIRATION" ]; then
+if [ "$DAYS_LEFT_TO_EXPRIATION" -gt "$MAX_DAYS_LEFT_TO_EXPIRATION" ]; then
     echo "The certificate is up to date, no need for renewal ($DAYS_TO_EXPIRATION days left)."
     exit 0
 else
-    mkdir -p /usr/local/etc/haproxy/certs
+    mkdir -p /usr/local/etc/haproxy/certs/$ROOT_DOMAIN
 
     if [ -n "$INITIAL_RENEWAL" ]; then
         echo "Creating certificate..."
-        $LETSENCRYPT_DIR/letsencrypt-auto certonly --agree-tos --renew-by-default -rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST
+        $LETSENCRYPT_DIR/letsencrypt-auto certonly --agree-tos --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST
 
-        echo "Creating $FULLCHAIN_FILE with latest certificates..."
+        echo "Creating $FULLCHAIN_FILE and copy certificates to volume..."
         sudo bash -c "cat $PRIVATE_KEY_FILE $CERTIFICATE_FILE > $FULLCHAIN_FILE"
-
+        sudo bash -c "cp $PRIVATE_KEY_FILE $COPY_PRIVATE_KEY_FILE"
+        sudo bash -c "cp $CERTIFICATE_FILE $COPY_CERTIFICATE_FILE"
         exit 0
     else
         echo "The certificate for $ROOT_DOMAIN is about to expire soon. Starting Let's Encrypt renewal script..."
-        $LETSENCRYPT_DIR/letsencrypt-auto certonly --agree-tos --renew-by-default -rsa-key-size 4096 --standalone-supported-challenges http-01 --http-01-port $LETSENCRYPT_PORT $OPTION_LIST
+        $LETSENCRYPT_DIR/letsencrypt-auto certonly --agree-tos --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 --http-01-port $LETSENCRYPT_PORT $OPTION_LIST
 
-        echo "Creating $FULLCHAIN_FILE with latest certificates..."
+        echo "Creating $FULLCHAIN_FILE and copy certificates to volume..."
         sudo bash -c "cat $PRIVATE_KEY_FILE $CERTIFICATE_FILE > $FULLCHAIN_FILE"
+        sudo bash -c "cp $PRIVATE_KEY_FILE $COPY_PRIVATE_KEY_FILE"
+        sudo bash -c "cp $CERTIFICATE_FILE $COPY_CERTIFICATE_FILE"
     fi
     $HAPROXY_CMD -sf $(cat $HAPROXY_PID_FILE)
     echo "Renewal process finished for domain $ROOT_DOMAIN"
