@@ -54,7 +54,7 @@ else
         sudo bash -c "cat $PRIVATE_KEY_FILE $CERTIFICATE_FILE > $FULLCHAIN_FILE"
         sudo bash -c "cp $PRIVATE_KEY_FILE $COPY_PRIVATE_KEY_FILE"
         sudo bash -c "cp $CERTIFICATE_FILE $COPY_CERTIFICATE_FILE"
-        echo "Renewal process finished for domain $ROOT_DOMAIN"
+        echo "Renewal process finished for domain $ROOT_DOMAIN."
         exit 0
     else
         echo "The certificate for $ROOT_DOMAIN is about to expire soon. Starting Let's Encrypt renewal script..."
@@ -66,7 +66,7 @@ else
         sudo bash -c "cp $CERTIFICATE_FILE $COPY_CERTIFICATE_FILE"
     fi
     $HAPROXY_CMD -sf $(cat $HAPROXY_PID_FILE)
-    echo "Renewal process finished for domain $ROOT_DOMAIN"
+    echo "Renewal process finished for domain $ROOT_DOMAIN."
 
     exit 0
 fi
