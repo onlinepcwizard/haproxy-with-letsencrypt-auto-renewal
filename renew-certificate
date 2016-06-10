@@ -24,6 +24,8 @@ for i in "${DOMAIN_LIST[@]}"; do
 done
 ROOT_DOMAIN=${DOMAIN_LIST[0]}
 
+echo "Using root domain '$ROOT_DOMAIN'."
+
 PRIVATE_KEY_FILE="/etc/letsencrypt/live/$ROOT_DOMAIN/privkey.pem"
 CERTIFICATE_FILE="/etc/letsencrypt/live/$ROOT_DOMAIN/fullchain.pem"
 COPY_PRIVATE_KEY_FILE="/usr/local/etc/haproxy/certs/$ROOT_DOMAIN/privkey.pem"
