@@ -24,6 +24,8 @@ for i in "${DOMAIN_LIST[@]}"; do
 done
 ROOT_DOMAIN=${DOMAIN_LIST[0]}
 
+echo "Using root domain '$ROOT_DOMAIN'."
+
 PRIVATE_KEY_FILE="/etc/letsencrypt/live/$ROOT_DOMAIN/privkey.pem"
 CERTIFICATE_FILE="/etc/letsencrypt/live/$ROOT_DOMAIN/fullchain.pem"
 COPY_PRIVATE_KEY_FILE="/usr/local/etc/haproxy/certs/$ROOT_DOMAIN/privkey.pem"
@@ -49,6 +51,7 @@ certificate_needs_update() {
     local now=$(date -d "now" +%s)
     local days_left_to_expiration=$(echo \( $expiration_time - $now \) / 86400 | bc)
     if [ "$days_left_to_expiration" -gt "$MAX_DAYS_LEFT_TO_EXPIRATION" ]; then
+        echo "The certificate is up to date, no need for renewal ($days_left_to_expiration days left)."
         return 1
     else
         return 0
@@ -80,6 +83,4 @@ if certificate_needs_update; then
         print_renewal_finish_statement
         $HAPROXY_CMD -sf $(cat $HAPROXY_PID_FILE)
     fi
-else
-    echo "The certificate is up to date, no need for renewal ($days_left_to_expiration days left)."
 fi
