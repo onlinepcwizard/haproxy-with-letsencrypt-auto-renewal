@@ -9,9 +9,9 @@ RUN sudo apt-get install -y bc
 RUN sudo apt-get install -y haproxy
 
 # Install
+RUN mkdir -p /opt/letsencrypt
 RUN curl -sL https://dl.eff.org/certbot-auto > /opt/letsencrypt/certbot-auto
 RUN chmod a+x /opt/letsencrypt/certbot-auto
-RUN sudo /opt/letsencrypt/certbot-auto
 
 ADD renew-certificate /usr/local/sbin/renew-certificate
 RUN sudo chmod +x /usr/local/sbin/renew-certificate
