@@ -69,7 +69,8 @@ if certificate_needs_update; then
 
     if [ -n "$INITIAL_RENEWAL" ]; then
         echo "Creating certificate..."
-        $LETSENCRYPT_DIR/certbot-auto certonly --standalone --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST
+        echo "$LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST"
+        $LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST
 
         print_creating_certificates
         ls -la /etc/letsencrypt/live
@@ -77,7 +78,8 @@ if certificate_needs_update; then
         print_renewal_finish_statement
     else
         echo "The certificate for $ROOT_DOMAIN is about to expire soon. Starting Let's Encrypt renewal script..."
-        $LETSENCRYPT_DIR/certbot-auto certonly --standalone --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 --http-01-port $LETSENCRYPT_PORT $OPTION_LIST
+        echo "$LETSENCRYPT_DIR/certbot-auto renew"
+        $LETSENCRYPT_DIR/certbot-auto renew
 
         print_creating_certificates
         create_certificate_files
@@ -85,3 +87,4 @@ if certificate_needs_update; then
         $HAPROXY_CMD -sf $(cat $HAPROXY_PID_FILE)
     fi
 fi
+    
