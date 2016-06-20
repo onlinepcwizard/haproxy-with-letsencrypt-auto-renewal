@@ -1,6 +1,7 @@
 FROM ubuntu:14.04
 
 # Dependencies
+RUN apt-get update -y
 RUN sudo apt-get install -y software-properties-common
 RUN sudo add-apt-repository ppa:vbernat/haproxy-1.6
 RUN apt-get update -y

@@ -18,11 +18,12 @@ LETSENCRYPT_DIR="/opt/letsencrypt";
 MAX_DAYS_LEFT_TO_EXPIRATION=30;
 
 OPTION_LIST=""
-IFS=',' read -ra DOMAIN_LIST <<< "$DOMAINS"
-for i in "${DOMAIN_LIST[@]}"; do
-    OPTION_LIST="$OPTION_LIST -d $i"
+IFS=',' read -ra NEW_DOMAINS <<< "$DOMAINS"
+for i in "${NEW_DOMAINS[@]}"; do
+    OPTION_LIST="$NEW_DOMAINS -d $i"
 done
-ROOT_DOMAIN=${DOMAIN_LIST[0]}
+ROOT_DOMAIN=${NEW_DOMAINS[0]}
+IFS=$'\n' NEW_DOMAINS=($(sort <<<"${NEW_DOMAINS[*]}"))
 
 echo "Using root domain '$ROOT_DOMAIN'."
 
@@ -31,10 +32,6 @@ CERTIFICATE_FILE="/etc/letsencrypt/live/$ROOT_DOMAIN/fullchain.pem"
 COPY_PRIVATE_KEY_FILE="/usr/local/etc/haproxy/certs/$ROOT_DOMAIN/privkey.pem"
 COPY_CERTIFICATE_FILE="/usr/local/etc/haproxy/certs/$ROOT_DOMAIN/fullchain.pem"
 FULLCHAIN_FILE="/usr/local/etc/haproxy/certs/$ROOT_DOMAIN/$ROOT_DOMAIN.pem"
-
-if [ ! -f $COPY_CERTIFICATE_FILE ]; then
-    echo "[ERROR] certificate file not found for domain $ROOT_DOMAIN."
-fi
 
 create_certificate_files() {
     sudo bash -c "cat $PRIVATE_KEY_FILE $CERTIFICATE_FILE > $FULLCHAIN_FILE"
@@ -47,6 +44,22 @@ print_creating_certificates() {
 }
 
 certificate_needs_update() {
+    if [ ! -e $COPY_CERTIFICATE_FILE ]; then
+        echo "No certificate file found for domain $ROOT_DOMAIN."
+        return 0
+    fi
+
+    local domains=$(openssl x509 -in $COPY_CERTIFICATE_FILE -text | grep "DNS:" | xargs | cut -c 5-)
+    local domains=${domains//DNS:/}
+
+    IFS=', ' read -ra OLD_DOMAINS <<< "$domains"
+    IFS=$'\n' OLD_DOMAINS=($(sort <<<"${OLD_DOMAINS[*]}"))
+
+    local diff=$(diff <(printf "%s\n" "${OLD_DOMAINS[@]}") <(printf "%s\n" "${NEW_DOMAINS[@]}"))
+    if [[ -n "$diff" ]]; then
+        return 0
+    fi
+
     local expiration_time=$(date -d "`openssl x509 -in $COPY_CERTIFICATE_FILE -text -noout | grep "Not After" | cut -c 25-`" +%s)
     local now=$(date -d "now" +%s)
     local days_left_to_expiration=$(echo \( $expiration_time - $now \) / 86400 | bc)
@@ -67,7 +80,7 @@ echo "Checking expiration date for $ROOT_DOMAIN..."
 if certificate_needs_update; then
     mkdir -p /usr/local/etc/haproxy/certs/$ROOT_DOMAIN
 
-    if [ -n "$INITIAL_RENEWAL" ]; then
+    if [[ -n "$INITIAL_RENEWAL" ]]; then
         echo "Creating certificate..."
         echo "$LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST"
         $LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST
