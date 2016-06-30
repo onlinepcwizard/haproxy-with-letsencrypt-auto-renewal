@@ -20,10 +20,11 @@ MAX_DAYS_LEFT_TO_EXPIRATION=30;
 OPTION_LIST=""
 IFS=',' read -ra NEW_DOMAINS <<< "$DOMAINS"
 for i in "${NEW_DOMAINS[@]}"; do
-    OPTION_LIST="$NEW_DOMAINS -d $i"
+    OPTION_LIST+=" -d $($i | xargs)"
 done
+OPTION_LIST=${OPTION_LIST:1}
 ROOT_DOMAIN=${NEW_DOMAINS[0]}
-IFS=$'\n' NEW_DOMAINS=($(sort <<<"${NEW_DOMAINS[*]}"))
+IFS=$'\n' NEW_DOMAINS=($(sort <<< "${NEW_DOMAINS[*]}"))
 
 echo "Using root domain '$ROOT_DOMAIN'."
 
@@ -53,7 +54,7 @@ certificate_needs_update() {
     local domains=${domains//DNS:/}
 
     IFS=', ' read -ra OLD_DOMAINS <<< "$domains"
-    IFS=$'\n' OLD_DOMAINS=($(sort <<<"${OLD_DOMAINS[*]}"))
+    IFS=$'\n' OLD_DOMAINS=($(sort <<< "${OLD_DOMAINS[*]}"))
 
     local diff=$(diff <(printf "%s\n" "${OLD_DOMAINS[@]}") <(printf "%s\n" "${NEW_DOMAINS[@]}"))
     if [[ -n "$diff" ]]; then
@@ -80,7 +81,7 @@ echo "Checking expiration date for $ROOT_DOMAIN..."
 if certificate_needs_update; then
     mkdir -p /usr/local/etc/haproxy/certs/$ROOT_DOMAIN
 
-    if [[ -n "$INITIAL_RENEWAL" ]]; then
+    if [ -n "$INITIAL_RENEWAL" ]; then
         echo "Creating certificate..."
         echo "$LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST"
         $LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST
