@@ -19,12 +19,14 @@ MAX_DAYS_LEFT_TO_EXPIRATION=30;
 
 OPTION_LIST=""
 IFS=',' read -ra NEW_DOMAINS <<< "$DOMAINS"
-for i in "${NEW_DOMAINS[@]}"; do
-    OPTION_LIST+=" -d $($i | xargs)"
+for domain in "${NEW_DOMAINS[@]}"; do
+    trimmed_domain=${domain//[[:blank:]]/}
+    OPTION_LIST+=" -d $trimmed_domain"
 done
 OPTION_LIST=${OPTION_LIST:1}
 ROOT_DOMAIN=${NEW_DOMAINS[0]}
 IFS=$'\n' NEW_DOMAINS=($(sort <<< "${NEW_DOMAINS[*]}"))
+NEW_DOMAINS=${NEW_DOMAINS:1}
 
 echo "Using root domain '$ROOT_DOMAIN'."
 
@@ -58,6 +60,10 @@ certificate_needs_update() {
 
     local diff=$(diff <(printf "%s\n" "${OLD_DOMAINS[@]}") <(printf "%s\n" "${NEW_DOMAINS[@]}"))
     if [[ -n "$diff" ]]; then
+        echo "new domains found"
+        echo "old: ${OLD_DOMAINS[@]}"
+        echo "new: ${NEW_DOMAINS[@]}"
+        echo "diff: $diff"
         return 0
     fi
 
@@ -83,17 +89,18 @@ if certificate_needs_update; then
 
     if [ -n "$INITIAL_RENEWAL" ]; then
         echo "Creating certificate..."
-        echo "$LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST"
-        $LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST
+        cmd="$LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST"
+        echo $cmd
+        eval $cmd
 
         print_creating_certificates
-        ls -la /etc/letsencrypt/live
         create_certificate_files
         print_renewal_finish_statement
     else
         echo "The certificate for $ROOT_DOMAIN is about to expire soon. Starting Let's Encrypt renewal script..."
-        echo "$LETSENCRYPT_DIR/certbot-auto renew"
-        $LETSENCRYPT_DIR/certbot-auto renew
+        cmd="$LETSENCRYPT_DIR/certbot-auto renew"
+        echo $cmd
+        eval $cmd
 
         print_creating_certificates
         create_certificate_files
