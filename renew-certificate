@@ -23,10 +23,11 @@ for domain in "${NEW_DOMAINS[@]}"; do
     trimmed_domain=${domain//[[:blank:]]/}
     OPTION_LIST+=" -d $trimmed_domain"
 done
+IFS=' -d ' read -ra NEW_TRIMMED_DOMAINS <<< $(echo "$OPTION_LIST" | cut -c 4-)
+echo $(echo "$OPTION_LIST" | cut -c 4-)
 OPTION_LIST=${OPTION_LIST:1}
-ROOT_DOMAIN=${NEW_DOMAINS[0]}
-IFS=$'\n' NEW_DOMAINS=($(sort <<< "${NEW_DOMAINS[*]}"))
-NEW_DOMAINS=${NEW_DOMAINS:1}
+ROOT_DOMAIN=${NEW_TRIMMED_DOMAINS[0]}
+IFS=$'\n' NEW_DOMAINS=($(sort <<< "${NEW_TRIMMED_DOMAINS[*]}"))
 
 echo "Using root domain '$ROOT_DOMAIN'."
 
