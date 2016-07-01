@@ -22,14 +22,17 @@ IFS=',' read -ra NEW_DOMAINS <<< "$DOMAINS"
 for domain in "${NEW_DOMAINS[@]}"; do
     trimmed_domain=${domain//[[:blank:]]/}
     OPTION_LIST+=" -d $trimmed_domain"
+    if [ -z "$ROOT_DOMAIN" ]; then
+        ROOT_DOMAIN=$trimmed_domain
+    fi
 done
-IFS=' -d ' read -ra NEW_TRIMMED_DOMAINS <<< $(echo "$OPTION_LIST" | cut -c 4-)
-echo $(echo "$OPTION_LIST" | cut -c 4-)
+TMP_NEW_TRIMMED_DOMAINS=$(echo "$OPTION_LIST" | cut -c 4-)
+NEW_TRIMMED_DOMAINS=(${TMP_NEW_TRIMMED_DOMAINS// -d / })
+echo "${NEW_TRIMMED_DOMAINS[*]}"
 OPTION_LIST=${OPTION_LIST:1}
-ROOT_DOMAIN=${NEW_TRIMMED_DOMAINS[0]}
 IFS=$'\n' NEW_DOMAINS=($(sort <<< "${NEW_TRIMMED_DOMAINS[*]}"))
 
-echo "Using root domain '$ROOT_DOMAIN'."
+echo "Using the domain '$ROOT_DOMAIN' as the name of our certificate."
 
 PRIVATE_KEY_FILE="/etc/letsencrypt/live/$ROOT_DOMAIN/privkey.pem"
 CERTIFICATE_FILE="/etc/letsencrypt/live/$ROOT_DOMAIN/fullchain.pem"
@@ -53,6 +56,8 @@ certificate_needs_update() {
         return 0
     fi
 
+    echo "Checking for newly added/subtracted domains:"
+
     local domains=$(openssl x509 -in $COPY_CERTIFICATE_FILE -text | grep "DNS:" | xargs | cut -c 5-)
     local domains=${domains//DNS:/}
 
@@ -61,12 +66,14 @@ certificate_needs_update() {
 
     local diff=$(diff <(printf "%s\n" "${OLD_DOMAINS[@]}") <(printf "%s\n" "${NEW_DOMAINS[@]}"))
     if [[ -n "$diff" ]]; then
-        echo "new domains found"
-        echo "old: ${OLD_DOMAINS[@]}"
-        echo "new: ${NEW_DOMAINS[@]}"
-        echo "diff: $diff"
+        echo "New or deleted domains found"
+        echo "Old: ${OLD_DOMAINS[@]}"
+        echo "New: ${NEW_DOMAINS[@]}"
+        echo "Diff: $diff"
         return 0
     fi
+
+    echo "Checking expiration date for $ROOT_DOMAIN..."
 
     local expiration_time=$(date -d "`openssl x509 -in $COPY_CERTIFICATE_FILE -text -noout | grep "Not After" | cut -c 25-`" +%s)
     local now=$(date -d "now" +%s)
@@ -82,8 +89,6 @@ certificate_needs_update() {
 print_renewal_finish_statement() {
     echo "Renewal process finished for domain $ROOT_DOMAIN."
 }
-
-echo "Checking expiration date for $ROOT_DOMAIN..."
 
 if certificate_needs_update; then
     mkdir -p /usr/local/etc/haproxy/certs/$ROOT_DOMAIN
