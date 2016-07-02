@@ -93,9 +93,9 @@ print_renewal_finish_statement() {
 if certificate_needs_update; then
     mkdir -p /usr/local/etc/haproxy/certs/$ROOT_DOMAIN
 
+    cmd="$LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --force-renewal --no-self-upgrade --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST"
     if [ -n "$INITIAL_RENEWAL" ]; then
         echo "Creating certificate..."
-        cmd="$LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --renew-by-default --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST"
         echo $cmd
         eval $cmd
 
@@ -104,7 +104,6 @@ if certificate_needs_update; then
         print_renewal_finish_statement
     else
         echo "The certificate for $ROOT_DOMAIN is about to expire soon. Starting Let's Encrypt renewal script..."
-        cmd="$LETSENCRYPT_DIR/certbot-auto renew"
         echo $cmd
         eval $cmd
 
