@@ -28,7 +28,6 @@ for domain in "${NEW_DOMAINS[@]}"; do
 done
 TMP_NEW_TRIMMED_DOMAINS=$(echo "$OPTION_LIST" | cut -c 4-)
 NEW_TRIMMED_DOMAINS=(${TMP_NEW_TRIMMED_DOMAINS// -d / })
-echo "${NEW_TRIMMED_DOMAINS[*]}"
 OPTION_LIST=${OPTION_LIST:1}
 IFS=$'\n' NEW_DOMAINS=($(sort <<< "${NEW_TRIMMED_DOMAINS[*]}"))
 
