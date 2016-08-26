@@ -10,9 +10,7 @@ if [ -z "$EMAIL" ]; then
     exit 1
 fi
 
-HAPROXY_PID_FILE="/var/run/haproxy.pid"
-HAPROXY_CONFIG_FILE="/usr/local/etc/haproxy/haproxy.cfg"
-HAPROXY_CMD="haproxy -f $HAPROXY_CONFIG_FILE -p $HAPROXY_PID_FILE"
+HAPROXY_RELOAD_CMD="supervisorctl signal HUP haproxy"
 LETSENCRYPT_PORT="54321"
 LETSENCRYPT_DIR="/opt/letsencrypt";
 MAX_DAYS_LEFT_TO_EXPIRATION=30;
@@ -92,7 +90,7 @@ print_renewal_finish_statement() {
 if certificate_needs_update; then
     mkdir -p /usr/local/etc/haproxy/certs/$ROOT_DOMAIN
 
-    cmd="$LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --force-renewal --no-self-upgrade --rsa-key-size 4096 --standalone-supported-challenges http-01 $OPTION_LIST"
+    cmd="$LETSENCRYPT_DIR/certbot-auto certonly --standalone --non-interactive --agree-tos --email $EMAIL --force-renewal --no-self-upgrade --rsa-key-size 4096 --standalone-supported-challenges http-01 --http-01-port $LETSENCRYPT_PORT $OPTION_LIST"
     if [ -n "$INITIAL_RENEWAL" ]; then
         echo "Creating certificate..."
         echo $cmd
@@ -109,7 +107,6 @@ if certificate_needs_update; then
         print_creating_certificates
         create_certificate_files
         print_renewal_finish_statement
-        $HAPROXY_CMD -sf $(cat $HAPROXY_PID_FILE)
+        eval $HAPROXY_RELOAD_CMD
     fi
 fi
-    
