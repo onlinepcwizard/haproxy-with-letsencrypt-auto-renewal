@@ -10,7 +10,7 @@ if [ -z "$EMAIL" ]; then
     exit 1
 fi
 
-HAPROXY_RELOAD_CMD="supervisorctl signal HUP haproxy"
+HAPROXY_RELOAD_CMD="haproxy -f /usr/local/etc/haproxy/haproxy.cfg -p /var/run/haproxy.pid -sf $(cat /var/run/haproxy.pid)"
 LETSENCRYPT_PORT="54321"
 LETSENCRYPT_DIR="/opt/letsencrypt";
 MAX_DAYS_LEFT_TO_EXPIRATION=30;
