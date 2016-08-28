@@ -1,1 +1,1 @@
-0 0 */2 * * root env >> /etc/environment && /usr/local/sbin/renew-certificate >> /var/log/renew-certificate.log
+0 0 */2 * * root . $HOME/.profile; /usr/local/sbin/renew-certificate >> /var/log/renew-certificate.log
