@@ -30,9 +30,8 @@ ADD supervisord.conf /etc/supervisord.conf
 # Crontab
 ADD crontab /etc/cron.d/renew-certificate-cron
 RUN chmod 0644 /etc/cron.d/renew-certificate-cron
-RUN cron
 
 EXPOSE 443
 EXPOSE 80
 
-CMD ["sh", "-c", "INITIAL_RENEWAL=true /usr/local/sbin/renew-certificate && supervisord"]
+CMD ["sh", "-c", "env > /tmp/.docker.env && INITIAL_RENEWAL=true /usr/local/sbin/renew-certificate && supervisord"]
