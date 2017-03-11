@@ -34,4 +34,4 @@ RUN chmod 0644 /etc/cron.d/renew-certificate-cron
 EXPOSE 443
 EXPOSE 80
 
-CMD ["sh", "-c", "env > /tmp/.docker.env && INITIAL_RENEWAL=true /usr/local/sbin/renew-certificate && supervisord"]
+CMD ["sh", "-c", "echo \"export DOMAINS='$DOMAINS'; export EMAILS='$EMAIL';\" > /tmp/.docker.env && INITIAL_RENEWAL=true /usr/local/sbin/renew-certificate && supervisord"]

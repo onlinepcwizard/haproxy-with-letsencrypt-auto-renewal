@@ -50,7 +50,6 @@ print_creating_certificates() {
 certificate_needs_update() {
     if [ ! -e $COPY_CERTIFICATE_FILE ]; then
         echo "No certificate file found for domain $ROOT_DOMAIN."
-        return 0
     fi
 
     echo "Checking for newly added/subtracted domains:"
@@ -67,7 +66,6 @@ certificate_needs_update() {
         echo "Old: ${OLD_DOMAINS[@]}"
         echo "New: ${NEW_DOMAINS[@]}"
         echo "Diff: $diff"
-        return 0
     fi
 
     echo "Checking expiration date for $ROOT_DOMAIN..."
@@ -77,10 +75,8 @@ certificate_needs_update() {
     local days_left_to_expiration=$(echo \( $expiration_time - $now \) / 86400 | bc)
     if [ "$days_left_to_expiration" -gt "$MAX_DAYS_LEFT_TO_EXPIRATION" ]; then
         echo "The certificate is up to date, no need for renewal ($days_left_to_expiration days left)."
-        return 1
-    else
-        return 0
     fi
+    return 0
 }
 
 print_renewal_finish_statement() {
